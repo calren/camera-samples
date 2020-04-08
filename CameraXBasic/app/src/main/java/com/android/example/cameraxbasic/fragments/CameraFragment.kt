@@ -24,10 +24,6 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.hardware.Camera
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.CaptureResult
-import android.hardware.camera2.TotalCaptureResult
 import android.hardware.display.DisplayManager
 import android.media.MediaScannerConnection
 import android.net.Uri
@@ -45,7 +41,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.widget.ImageButton
-import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraX
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageAnalysisConfig
@@ -267,6 +262,7 @@ class CameraFragment : Fragment() {
 
     /** Declare and bind preview, capture and analysis use cases */
     private fun bindCameraUseCases() {
+
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = DisplayMetrics().also { viewFinder.display.getRealMetrics(it) }
         val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
@@ -280,25 +276,10 @@ class CameraFragment : Fragment() {
             // Set initial target rotation, we will have to call this again if rotation changes
             // during the lifecycle of this use case
             setTargetRotation(viewFinder.display.rotation)
-        }
-
-        val captureCallback = object: CameraCaptureSession.CaptureCallback() {
-            override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
-                super.onCaptureCompleted(session, request, result)
-                val faces = result.get(CaptureResult.STATISTICS_FACES)
-                if (faces.isNotEmpty()) {
-                    Log.d("FaceDetection", "Detected ${faces.size} faces")
-                }
-            }
-        }
-
-        Camera2Config.Extender(viewFinderConfig)
-                .setCaptureRequestOption(CaptureRequest.STATISTICS_FACE_DETECT_MODE,
-                        CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE)
-                .setSessionCaptureCallback(captureCallback)
+        }.build()
 
         // Use the auto-fit preview builder to automatically handle size and orientation changes
-        preview = AutoFitPreviewBuilder.build(viewFinderConfig.build(), viewFinder)
+        preview = AutoFitPreviewBuilder.build(viewFinderConfig, viewFinder)
 
         // Set up the capture use case to allow users to take photos
         val imageCaptureConfig = ImageCaptureConfig.Builder().apply {
